@@ -61,7 +61,7 @@ def seed_db():
     raphael_bangkok = Reviews(
         destination = "Bangkok", user = "Raphael",
         date = datetime(2023, 1, 1),
-        weather = 4, safety = 3, price = 2, transport = 4, friendliness = 5,
+        weather = 4, safety = 3, price = 2, transport = 4, #friendliness = 5,
         writing = "Truly the capital of the land of smiles"
     )
     db.session.add(raphael_bangkok)
