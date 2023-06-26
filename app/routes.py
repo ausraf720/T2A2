@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, abort
 from init import db
 from models import Reviews, review_schema, reviews_schema, ReviewSchema
 from datetime import date
@@ -43,5 +43,22 @@ def post_review():
     db.session.add(new_review)
     db.session.commit()
     return jsonify(review_schema.dump(new_review))
+
+#\***************************************************************************\
+
+@review_bp.route("/<int:id>/", methods=["DELETE"])
+def post_delete(id):
+
+    bad_review = Reviews.query.filter_by(review_id=id).first()
+    
+    #Return an error if review doesn't exist
+    if not bad_review:
+        return abort(400, description= "Review does not exist")
+    
+    #Otherwise delete review
+    else:
+        db.session.delete(bad_review)
+        db.session.commit()
+        return jsonify(review_schema.dump(bad_review))
 
 #\***************************************************************************\
