@@ -15,13 +15,13 @@ class Reviews(db.Model):
 
     #Add the rest of the keys
     date = db.Column(db.Date())
-    weather_rating = db.Column(db.Integer())
-    safety_rating = db.Column(db.Integer())
-    price_rating = db.Column(db.Integer())
-    transport_rating = db.Column(db.Integer())
-    friendliness_rating = db.Column(db.Integer())
+    weather = db.Column(db.Integer())
+    safety = db.Column(db.Integer())
+    price = db.Column(db.Integer())
+    transport = db.Column(db.Integer())
+    friendliness = db.Column(db.Integer())
 
-    written_review = db.Column(db.String())
+    writing = db.Column(db.String())
 
 #\***************************************************************************\
 
