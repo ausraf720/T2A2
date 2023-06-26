@@ -1,4 +1,4 @@
-from init import db
+from init import db, ma
 
 #\***************************************************************************\
 
@@ -51,3 +51,14 @@ class Users(db.Model):
     password = db.Column(db.String())
 
 #\***************************************************************************\
+
+#Reviews schema
+class ReviewSchema(ma.Schema):
+    class Meta:
+        fields = ("review_id", "destination", "user", "date",
+                   "weather", "safety", "price", "transport", 
+                   "friendliness", "writing")
+
+#Handle schemas for one either one or multiple cards need to be retrieved
+review_schema = ReviewSchema()
+reviews_schema = ReviewSchema(many=True)

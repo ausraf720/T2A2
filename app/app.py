@@ -1,6 +1,7 @@
 from flask import Flask
-from init import db
+from init import db, ma
 from controllers import db_commands
+from routes import review_bp
 
 from dotenv import load_dotenv
 import os
@@ -27,9 +28,11 @@ uri = f'postgresql+psycopg2:' + \
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
 
 db.init_app(app)
+ma.init_app(app)
 
 #Register commands
 app.register_blueprint(db_commands)
+app.register_blueprint(review_bp)
 
   
 #\***************************************************************************\
