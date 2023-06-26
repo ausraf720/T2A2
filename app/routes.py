@@ -24,7 +24,6 @@ def post_review():
 
     #Create new review
     review_fields = ReviewSchema().load(request.json)
-    print(review_fields)
 
     #Fetch data from json request to be put into table
     new_review = Reviews(
@@ -47,7 +46,7 @@ def post_review():
 #\***************************************************************************\
 
 @review_bp.route("/<int:id>/", methods=["DELETE"])
-def post_delete(id):
+def delete_review(id):
 
     bad_review = Reviews.query.filter_by(review_id=id).first()
     
@@ -60,5 +59,33 @@ def post_delete(id):
         db.session.delete(bad_review)
         db.session.commit()
         return jsonify(review_schema.dump(bad_review))
+
+#\***************************************************************************\
+
+@review_bp.route("/<int:id>/", methods=["PUT", "PATCH"])
+def update_review(id):
+
+    review_fields = ReviewSchema().load(request.json)
+    old_review = Reviews.query.filter_by(review_id=id).first()
+    
+    #Return an error if review doesn't exist
+    if not old_review:
+        return abort(400, description= "Review does not exist")
+    
+    #Otherwise delete review
+    else:
+
+        old_review.weather = review_fields["weather"], 
+        old_review.safety = review_fields["safety"], 
+        old_review.price = review_fields["price"], 
+        old_review.transport = review_fields["transport"], 
+        old_review.friendliness = review_fields["friendliness"],
+        old_review.writing = review_fields["writing"]
+
+        db.session.commit()
+        return jsonify(review_schema.dump(old_review))
+        
+
+
 
 #\***************************************************************************\
