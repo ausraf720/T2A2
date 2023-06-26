@@ -34,7 +34,7 @@ class Destinations(db.Model):
     #Add the rest of the keys
     name = db.Column(db.String())
     country = db.Column(db.String())
-    lattitude = db.Column(db.Float())
+    latitude = db.Column(db.Float())
     longitude = db.Column(db.Float())
 
 #\***************************************************************************\
