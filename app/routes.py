@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, abort
 from init import db
 from models import Reviews, review_schema, reviews_schema, ReviewSchema
+from flask_jwt_extended import jwt_required
 from datetime import date
 
 review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
@@ -19,7 +20,9 @@ def get_reviews():
 #\***************************************************************************\
 
 #Post new review route endpoint
+
 @review_bp.route("/", methods=["POST"])
+@jwt_required()
 def post_review():
 
     #Create new review
@@ -46,6 +49,7 @@ def post_review():
 #\***************************************************************************\
 
 @review_bp.route("/<int:id>/", methods=["DELETE"])
+@jwt_required()
 def delete_review(id):
 
     bad_review = Reviews.query.filter_by(review_id=id).first()
@@ -63,6 +67,7 @@ def delete_review(id):
 #\***************************************************************************\
 
 @review_bp.route("/<int:id>/", methods=["PUT", "PATCH"])
+@jwt_required()
 def update_review(id):
 
     review_fields = ReviewSchema().load(request.json)
