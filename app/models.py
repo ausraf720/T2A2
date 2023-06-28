@@ -59,6 +59,16 @@ class ReviewSchema(ma.Schema):
                    "weather", "safety", "price", "transport", 
                    "friendliness", "writing")
 
-#Handle schemas for one either one or multiple cards need to be retrieved
+#Handle schemas for either one or multiple reviews when necessary
 review_schema = ReviewSchema()
 reviews_schema = ReviewSchema(many=True)
+
+#\***************************************************************************\
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ("user_id", "username", "email", "password")
+
+#Handle schemas for either one user when necessary
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)

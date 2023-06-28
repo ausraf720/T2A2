@@ -2,6 +2,7 @@ from flask import Flask
 from init import db, ma, bcrypt
 from controllers import db_commands
 from routes import review_bp
+from authorisation import auth_bp
 
 from dotenv import load_dotenv
 import os
@@ -32,6 +33,7 @@ bcrypt.init_app(app)
 #Register commands
 app.register_blueprint(db_commands)
 app.register_blueprint(review_bp)
+app.register_blueprint(auth_bp)
 
   
 #\***************************************************************************\

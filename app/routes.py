@@ -38,7 +38,7 @@ def post_review():
         writing = review_fields["writing"]
     )
 
-    #Add and commit, then return the review data
+    #Add and commit, then return the review data to confirm it works
     db.session.add(new_review)
     db.session.commit()
     return jsonify(review_schema.dump(new_review))
