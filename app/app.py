@@ -1,12 +1,10 @@
 from flask import Flask
-from init import db, ma
+from init import db, ma, bcrypt
 from controllers import db_commands
 from routes import review_bp
 
 from dotenv import load_dotenv
 import os
-
-
 
 #\***************************************************************************\
     
@@ -29,6 +27,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = uri
 
 db.init_app(app)
 ma.init_app(app)
+bcrypt.init_app(app)
 
 #Register commands
 app.register_blueprint(db_commands)

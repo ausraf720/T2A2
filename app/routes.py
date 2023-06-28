@@ -3,9 +3,9 @@ from init import db
 from models import Reviews, review_schema, reviews_schema, ReviewSchema
 from datetime import date
 
-
 review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
 
+#CRUD OPERATIONS BELOW
 #\***************************************************************************\
 
 #Retrieve all reviews route endpoint
@@ -85,7 +85,5 @@ def update_review(id):
         db.session.commit()
         return jsonify(review_schema.dump(old_review))
         
-
-
 
 #\***************************************************************************\
