@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, abort
+from sqlalchemy import select, func
 from init import db
 from models import Reviews, review_schema, reviews_schema, ReviewSchema
 from flask_jwt_extended import jwt_required
@@ -33,11 +34,13 @@ def post_review():
         destination = review_fields["destination"], 
         user = review_fields["user"],
         date = date.today(),
+
         weather = review_fields["weather"], 
         safety = review_fields["safety"], 
         price = review_fields["price"], 
         transport = review_fields["transport"], 
         friendliness = review_fields["friendliness"],
+
         writing = review_fields["writing"]
     )
 
@@ -89,6 +92,60 @@ def update_review(id):
 
         db.session.commit()
         return jsonify(review_schema.dump(old_review))
+    
+
+#SPECIAL OPERATIONS
+#\***************************************************************************\
+
+#Get all reviews from particular user, anybody can access so no jwt here
+@review_bp.route("/for_user/<int:id>/", methods=["GET"])
+def get_reviews_for_user(id):
+
+    stmt = select(Reviews).where(Reviews.user==id)
+    reviews_list_for_user = db.session.scalars(stmt).all()
+
+    result = reviews_schema.dump(reviews_list_for_user)
+    return jsonify(result)
+
+#\***************************************************************************\
+
+#Get average scores for a particular destination, no jwt again
+
+@review_bp.route("/avg/<int:id>", methods=["GET"])
+def get_avg_scores(id):
+
+    
+    stmt = select(Reviews.price, Reviews.friendliness, 
+                  Reviews.safety, Reviews.transport, 
+                  Reviews.weather).where(Reviews.destination==id)
+    
+    reviews_avg_for_destination = db.session.execute(stmt)
+    result = reviews_schema.dump(reviews_avg_for_destination)
+
+    #Code to figure out averages for each, first make dict
+    avg_dict = {"friendliness": 0,
+                "price": 0,
+                "safety": 0,
+                "transport": 0,
+                "weather": 0}
+
+    #Then iterate through each score type to find average for each
+    for score_type in avg_dict.keys():
+
+        count = 0
+        for scores in result:
+            if score_type in scores.keys():
+                count += 1
+                avg_dict[score_type] += scores[score_type]
         
+        #Check for if count 0, if so, don't calculate avg,
+        # otherwise will get DivideByZeroError
+        if count != 0:
+            avg_dict[score_type] /= count
+
+
+
+    return jsonify(avg_dict)
+
 
 #\***************************************************************************\
