@@ -143,8 +143,6 @@ def get_avg_scores(id):
         if count != 0:
             avg_dict[score_type] /= count
 
-
-
     return jsonify(avg_dict)
 
 

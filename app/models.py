@@ -1,4 +1,6 @@
 from init import db, ma
+from marshmallow import fields
+
 
 #\***************************************************************************\
 
@@ -15,11 +17,6 @@ class Destinations(db.Model):
     longitude = db.Column(db.Float())
 
     #Link to destinations table
-    reviews = db.relationship(
-        "Reviews",
-        backref="destinations",
-        cascade="all, delete"
-    )
 
 #\***************************************************************************\
 
@@ -34,13 +31,6 @@ class Users(db.Model):
     email = db.Column(db.String())
     password = db.Column(db.String())
 
-    #Link to reviews table
-    reviews = db.relationship(
-        "Reviews",
-        backref="users",
-        cascade="all, delete"
-    )
-
 #\***************************************************************************\
 
 class Reviews(db.Model):
@@ -51,8 +41,12 @@ class Reviews(db.Model):
 
     #Add the user and destination keys, 
     #which cannot be null as they'll also be foreign keys
-    destination = db.Column(db.Integer, db.ForeignKey("destinations.destination_id"), nullable=False)
-    user = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+    destination = db.Column(db.Integer, 
+                            db.ForeignKey("destinations.destination_id"), 
+                            nullable=False)
+    user = db.Column(db.Integer, 
+                     db.ForeignKey("users.user_id"), 
+                     nullable=False)
 
     #Add the rest of the keys
     date = db.Column(db.Date())
@@ -61,8 +55,12 @@ class Reviews(db.Model):
     price = db.Column(db.Integer())
     transport = db.Column(db.Integer())
     friendliness = db.Column(db.Integer())
-
     writing = db.Column(db.String())
+
+    #Code for adding relationships to be displayed,
+    #  when user and destination info needed in a review section
+    user_rel = db.relationship('Users', backref='reviews')
+    dest_rel = db.relationship('Destinations', backref='reviews')
 
 #\***************************************************************************\
 
@@ -70,18 +68,30 @@ class UserSchema(ma.Schema):
     class Meta:
         fields = ("user_id", "username", "email", "password")
 
+
 #Handle schemas for either one user when necessary
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+
+#Quick destination schema
+class DestinationSchema(ma.Schema):
+    class Meta:
+        fields = ("name", "country")
 
 #\***************************************************************************\
 
 #Reviews schema
 class ReviewSchema(ma.Schema):
+
+    user_rel = fields.Nested('UserSchema', only=("username",))
+    dest_rel = fields.Nested('DestinationSchema')
+    
     class Meta:
-        fields = ("review_id", "destination", "user", "date",
-                   "weather", "safety", "price", "transport", 
+        fields = ("review_id", "destination", "date", "user",
+                  "weather", "safety", "price", "transport", 
                    "friendliness", "writing")
+        
+
 
 #Handle schemas for either one or multiple reviews when necessary
 review_schema = ReviewSchema()

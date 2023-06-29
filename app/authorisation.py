@@ -50,17 +50,3 @@ def auth_login():
         return jsonify({"User":user.username, "Token": access_token })
 
 #\***************************************************************************\
-
-
-#MAY GET DELETED LATER
-#\***************************************************************************\
-
-#Retrieve all reviews route endpoint
-@auth_bp.route("/", methods=["GET"])
-def get_users():
-    
-    reviews_list = Users.query.all()
-    result = users_schema.dump(reviews_list)
-    return jsonify(result)
-
-#\***************************************************************************\
