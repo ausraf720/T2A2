@@ -3,8 +3,11 @@ from init import db, bcrypt, jwt
 from models import Users, user_schema, users_schema
 from datetime import timedelta
 from flask_jwt_extended import create_access_token
+from routes import error_handler
 
 auth_bp = Blueprint('auth', __name__, url_prefix="/auth")
+
+error_handler(auth_bp)
 
 #\***************************************************************************\
 
@@ -21,11 +24,11 @@ def auth_register():
         password = bcrypt.generate_password_hash(user_fields["password"]).decode("utf-8")
     )
 
-    name = Users.query.filter_by(email=user_fields["username"]).first()
+    username = Users.query.filter_by(username=user_fields["username"]).first()
     email = Users.query.filter_by(email=user_fields["email"]).first()
-    if name or email:
+    if username or email:
         #
-        return abort(400, description="Email and or user already registered")
+        return abort(400, description="Email and or name already registered")
 
     #Add and commit, then return the user data to confirm it works
     db.session.add(new_user)

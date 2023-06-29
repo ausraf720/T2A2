@@ -1,6 +1,6 @@
 from init import db, ma
 from marshmallow import fields
-
+from marshmallow.validate import Length, OneOf
 
 #\***************************************************************************\
 
@@ -65,9 +65,20 @@ class Reviews(db.Model):
 #\***************************************************************************\
 
 class UserSchema(ma.Schema):
+
+    #Firstly validate inputs so that they exist and password long enough
+    password = fields.String(required=True, 
+                             validate=Length(min=6, 
+                                             error='Password too short'))
+    username = fields.String(required=True, 
+                             validate=Length(min=1, 
+                                             error='Name cannot be empty'))
+    email = fields.String(required=True, 
+                          validate=Length(min=1, 
+                                          error='Email cannot be empty'))
+
     class Meta:
         fields = ("user_id", "username", "email", "password")
-
 
 #Handle schemas for either one user when necessary
 user_schema = UserSchema()
@@ -96,3 +107,5 @@ class ReviewSchema(ma.Schema):
 #Handle schemas for either one or multiple reviews when necessary
 review_schema = ReviewSchema()
 reviews_schema = ReviewSchema(many=True)
+
+#\***************************************************************************\

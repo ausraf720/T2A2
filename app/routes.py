@@ -4,6 +4,8 @@ from init import db
 from models import Reviews, Users, review_schema, reviews_schema, ReviewSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import date
+from werkzeug.exceptions import BadRequest
+from marshmallow.exceptions import ValidationError
 
 review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
 
@@ -15,11 +17,28 @@ review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
 def user_validator(review):
     user_id = get_jwt_identity()
     user_jwt = Users.query.get(user_id)
-    
+
     #Check jwt is valid, and that user is correct
     if (not user_jwt) or (str(user_id) != str(review.user)):
         return abort(401, description="Invalid user")
 
+#\***************************************************************************\
+
+#Error handling for when inputs are missing or json is malformed
+def error_handler(blueprint):
+    @blueprint.errorhandler(KeyError)
+    def key_error(e):
+        return jsonify({'error': f'The field {e} is required'}), 400
+
+    @blueprint.errorhandler(BadRequest)
+    def default_error(e):
+        return jsonify({'error': e.description}), 400
+
+    @blueprint.errorhandler(ValidationError)
+    def validation_error(e):
+        return jsonify(e.messages), 400
+
+error_handler(review_bp)
 
 #CRUD OPERATIONS BELOW
 #\***************************************************************************\
@@ -40,7 +59,6 @@ def get_reviews():
 @jwt_required()
 def post_review():
 
-
     #Create new review
     review_fields = ReviewSchema().load(request.json)
     #Fetch data from json request to be put into table
@@ -58,8 +76,8 @@ def post_review():
         writing = review_fields["writing"]
     )
 
+    #Check user is valid
     user_validator(new_review)
-
 
     #Add and commit, then return the review data to confirm it works
     db.session.add(new_review)

@@ -1,6 +1,6 @@
 from flask import Flask
 from init import db, ma, bcrypt, jwt
-from controllers import db_commands
+from commands import db_commands
 from routes import review_bp
 from authorisation import auth_bp
 
