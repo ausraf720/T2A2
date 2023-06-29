@@ -1,11 +1,25 @@
 from flask import Blueprint, jsonify, request, abort
 from sqlalchemy import select, func
 from init import db
-from models import Reviews, review_schema, reviews_schema, ReviewSchema
-from flask_jwt_extended import jwt_required
+from models import Reviews, Users, review_schema, reviews_schema, ReviewSchema
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import date
 
 review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
+
+#\***************************************************************************\
+
+#Validation function for the CRUD operations,
+# such that users cannot perform these operations on reviews of other users,
+# and cannot do anything unless logged in
+def user_validator(review):
+    user_id = get_jwt_identity()
+    user_jwt = Users.query.get(user_id)
+    
+    #Check jwt is valid, and that user is correct
+    if (not user_jwt) or (str(user_id) != str(review.user)):
+        return abort(401, description="Invalid user")
+
 
 #CRUD OPERATIONS BELOW
 #\***************************************************************************\
@@ -26,9 +40,9 @@ def get_reviews():
 @jwt_required()
 def post_review():
 
+
     #Create new review
     review_fields = ReviewSchema().load(request.json)
-
     #Fetch data from json request to be put into table
     new_review = Reviews(
         destination = review_fields["destination"], 
@@ -43,6 +57,9 @@ def post_review():
 
         writing = review_fields["writing"]
     )
+
+    user_validator(new_review)
+
 
     #Add and commit, then return the review data to confirm it works
     db.session.add(new_review)
@@ -63,6 +80,9 @@ def delete_review(id):
     
     #Otherwise delete review
     else:
+
+        user_validator(bad_review)
+
         db.session.delete(bad_review)
         db.session.commit()
         return jsonify(review_schema.dump(bad_review))
@@ -82,6 +102,8 @@ def update_review(id):
     
     #Otherwise delete review
     else:
+
+        user_validator(old_review)
 
         old_review.weather = review_fields["weather"], 
         old_review.safety = review_fields["safety"], 

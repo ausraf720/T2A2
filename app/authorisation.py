@@ -21,6 +21,12 @@ def auth_register():
         password = bcrypt.generate_password_hash(user_fields["password"]).decode("utf-8")
     )
 
+    name = Users.query.filter_by(email=user_fields["username"]).first()
+    email = Users.query.filter_by(email=user_fields["email"]).first()
+    if name or email:
+        #
+        return abort(400, description="Email and or user already registered")
+
     #Add and commit, then return the user data to confirm it works
     db.session.add(new_user)
     db.session.commit()
