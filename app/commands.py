@@ -28,13 +28,13 @@ def seed_db():
     #Add data for example users
     raphael = Users(
         username = "Raphael", email = "ausraf360@outlook.com", 
-        password = bcrypt.generate_password_hash("12345").decode("utf-8")
+        password = bcrypt.generate_password_hash("1234567").decode("utf-8")
     )
     db.session.add(raphael)
 
     aerolf = Users(
         username = "Aerolf", email = "farsua063@kooltou.com", 
-        password = bcrypt.generate_password_hash("54321").decode("utf-8")
+        password = bcrypt.generate_password_hash("7654321").decode("utf-8")
     )
     db.session.add(aerolf)
 

@@ -40,7 +40,7 @@ class Reviews(db.Model):
     review_id = db.Column(db.Integer, primary_key=True)
 
     #Add the user and destination keys, 
-    #which cannot be null as they'll also be foreign keys
+    # which cannot be null as they'll also be foreign keys
     destination = db.Column(db.Integer, 
                             db.ForeignKey("destinations.destination_id"), 
                             nullable=False)
@@ -73,7 +73,7 @@ class UserSchema(ma.Schema):
     username = fields.String(required=True, 
                              validate=Length(min=1, 
                                              error='Name cannot be empty'))
-    email = fields.String(required=True, 
+    email = fields.String(required=False, 
                           validate=Length(min=1, 
                                           error='Email cannot be empty'))
 
@@ -91,18 +91,24 @@ class DestinationSchema(ma.Schema):
 
 #\***************************************************************************\
 
+#Rating scale should only accept 1 to 5
+VALID_RATING = [1,2,3,4,5]
+
 #Reviews schema
 class ReviewSchema(ma.Schema):
 
     user_rel = fields.Nested('UserSchema', only=("username",))
     dest_rel = fields.Nested('DestinationSchema')
+
+    #Validate each score such they're between 1 and 5 (inclusive)
+    price = safety = transport = weather = friendliness = \
+        fields.Integer(required=True, validate=OneOf(VALID_RATING)) 
     
     class Meta:
         fields = ("review_id", "destination", "date", "user",
                   "weather", "safety", "price", "transport", 
                    "friendliness", "writing")
         
-
 
 #Handle schemas for either one or multiple reviews when necessary
 review_schema = ReviewSchema()

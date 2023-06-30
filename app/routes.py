@@ -4,7 +4,7 @@ from init import db
 from models import Reviews, Users, review_schema, reviews_schema, ReviewSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import date
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, Unauthorized
 from marshmallow.exceptions import ValidationError
 
 review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
@@ -37,8 +37,13 @@ def error_handler(blueprint):
     @blueprint.errorhandler(ValidationError)
     def validation_error(e):
         return jsonify(e.messages), 400
+    
+    @blueprint.errorhandler(Unauthorized)
+    def unauthorized_error(e):
+        return jsonify({'error': e.description}), 401
 
 error_handler(review_bp)
+
 
 #CRUD OPERATIONS BELOW
 #\***************************************************************************\
