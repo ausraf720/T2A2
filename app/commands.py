@@ -21,42 +21,49 @@ def drop_db():
 
 #\***************************************************************************\
 
+#Quick function that reduces code for adding objects to session
+def adder(object):
+    db.session.add(object)
+
+#\***************************************************************************\
+
 #Command for seeding tables with example data
 @db_commands.cli.command("seed")
 def seed_db():
 
-    #Add data for example users
+    #Add data for example users, making sure to encrypt passwords
     raphael = Users(
         username = "Raphael", email = "ausraf360@outlook.com", 
         password = bcrypt.generate_password_hash("1234567").decode("utf-8")
     )
-    db.session.add(raphael)
+    adder(raphael)
 
     aerolf = Users(
         username = "Aerolf", email = "farsua063@kooltou.com", 
         password = bcrypt.generate_password_hash("7654321").decode("utf-8")
     )
-    db.session.add(aerolf)
+    adder(aerolf)
 
     #Add data for example cities
     bangkok = Destinations(
         name = "Bangkok", country = "Thailand",
         latitude = 13.736717, longitude = 100.523186
     ) 
-    db.session.add(bangkok)
+    adder(bangkok)
 
     phuket = Destinations(
         name = "Phuket", country = "Thailand",
         latitude = 8.032003, longitude = 98.333466
     )
-    db.session.add(phuket)
+    adder(phuket)
 
     melbourne = Destinations(
         name = "Melbourne", country = "Australia",
         latitude = -37.840935, longitude = 144.946457
     )
-    db.session.add(melbourne)
+    adder(melbourne)
 
+    #Commit users and destinations before making reviews
     db.session.commit()
 
     #Add data for example reviews for Raphael
@@ -66,8 +73,7 @@ def seed_db():
         weather = 4, safety = 3, price = 2, transport = 4, friendliness = 5,
         writing = "Truly the capital of the land of smiles"
     )
-
-    db.session.add(raphael_bangkok)
+    adder(raphael_bangkok)
 
     raphael_phuket = Reviews(
         destination = phuket.destination_id, user = raphael.user_id,
@@ -75,7 +81,7 @@ def seed_db():
         weather = 5, safety = 3, price = 3, transport = 3, friendliness = 5,
         writing = "Great island paradise"
     )
-    db.session.add(raphael_phuket)
+    adder(raphael_phuket)
 
     raphael_melbourne = Reviews(
         destination = melbourne.destination_id, user = raphael.user_id,
@@ -83,7 +89,7 @@ def seed_db():
         weather = 2, safety = 4, price = 5, transport = 3, friendliness = 4,
         writing = "Prices won't stop going up"
     )
-    db.session.add(raphael_melbourne)
+    adder(raphael_melbourne)
 
     #Add data for example reviews for Aerolf
     aerolf_bangkok = Reviews(
@@ -92,7 +98,7 @@ def seed_db():
         weather = 3, safety = 1, price = 2, transport = 2, friendliness = 4,
         writing = "I'm never getting on a moped in Thailand again"
     )
-    db.session.add(aerolf_bangkok)
+    adder(aerolf_bangkok)
 
     aerolf_phuket = Reviews(
         destination = phuket.destination_id, user = aerolf.user_id,
@@ -100,7 +106,7 @@ def seed_db():
         weather = 5, safety = 2, price = 3, transport = 3, friendliness = 4,
         writing = "Riding on a moped here was slighlty less terrible"
     )
-    db.session.add(aerolf_phuket)
+    adder(aerolf_phuket)
 
     aerolf_melbourne = Reviews(
         destination = melbourne.destination_id, user = aerolf.user_id,
@@ -108,9 +114,9 @@ def seed_db():
         weather = 1, safety = 5, price = 4, transport = 5, friendliness = 5,
         writing = "No mopeds, good thing too because it won't stop raining"
     )
-    db.session.add(aerolf_melbourne)
+    adder(aerolf_melbourne)
 
-    #Commit instances and make notification
+    #Commit review instances and make notification that seeding was succesful
     db.session.commit()
     print("Tables seeded")
 

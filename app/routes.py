@@ -1,11 +1,12 @@
 from flask import Blueprint, jsonify, request, abort
-from sqlalchemy import select, func
+from sqlalchemy import select
 from init import db
-from models import Reviews, Users, review_schema, reviews_schema, ReviewSchema
+from models import Reviews, Users, Destinations, \
+                    review_schema, reviews_schema, \
+                    destination_schema, destinations_schema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import date
-from werkzeug.exceptions import BadRequest, Unauthorized
-from marshmallow.exceptions import ValidationError
+from error_handling import error_handler
 
 review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
 
@@ -15,86 +16,80 @@ review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
 # such that users cannot perform these operations on reviews of other users,
 # and cannot do anything unless logged in
 def user_validator(review):
+
+    #Decrypt JWT token to obtain original user id
     user_id = get_jwt_identity()
+
+    #Find related user info by finding db entry that matches the user_id,
+    # in the Users table
     user_jwt = Users.query.get(user_id)
 
     #Check jwt is valid, and that user is correct
     if (not user_jwt) or (str(user_id) != str(review.user)):
         return abort(401, description="Invalid user")
 
-#\***************************************************************************\
-
-#Error handling for when inputs are missing or json is malformed
-def error_handler(blueprint):
-    @blueprint.errorhandler(KeyError)
-    def key_error(e):
-        return jsonify({'error': f'The field {e} is required'}), 400
-
-    @blueprint.errorhandler(BadRequest)
-    def default_error(e):
-        return jsonify({'error': e.description}), 400
-
-    @blueprint.errorhandler(ValidationError)
-    def validation_error(e):
-        return jsonify(e.messages), 400
-    
-    @blueprint.errorhandler(Unauthorized)
-    def unauthorized_error(e):
-        return jsonify({'error': e.description}), 401
-
 error_handler(review_bp)
-
 
 #CRUD OPERATIONS BELOW
 #\***************************************************************************\
 
-#Retrieve all reviews route endpoint
+#This route retrieves all reviews that exist in the database
 @review_bp.route("/", methods=["GET"])
 def get_reviews():
     
+    #This query gets everything from the Reviews table
     reviews_list = Reviews.query.all()
+
+    #Then, the result is made into a dict then returned as json
     result = reviews_schema.dump(reviews_list)
     return jsonify(result)
 
 #\***************************************************************************\
 
-#Post new review route endpoint
-
+#This route allows a particular user to post a review
 @review_bp.route("/", methods=["POST"])
 @jwt_required()
 def post_review():
 
-    #Create new review
-    review_fields = ReviewSchema().load(request.json)
-    #Fetch data from json request to be put into table
+    #Data is obtained in json form to be put into table
+    review_fields = review_schema.load(request.json)
+    
+    #Here, the review object is created
     new_review = Reviews(
+
+        #These fields are the main information for the review
         destination = review_fields["destination"], 
         user = review_fields["user"],
         date = date.today(),
 
+        #These are the various scoring categories
         weather = review_fields["weather"], 
         safety = review_fields["safety"], 
         price = review_fields["price"], 
         transport = review_fields["transport"], 
         friendliness = review_fields["friendliness"],
 
+        #This is the more detailed description
         writing = review_fields["writing"]
     )
 
-    #Check user is valid
+    #Check user is valid by calling this function
     user_validator(new_review)
 
-    #Add and commit, then return the review data to confirm it works
+    #Add and commit, then return the review data to confirm success
     db.session.add(new_review)
     db.session.commit()
     return jsonify(review_schema.dump(new_review))
 
 #\***************************************************************************\
 
+#This route deals with allowing a user to delete one of their reviews
 @review_bp.route("/<int:id>/", methods=["DELETE"])
 @jwt_required()
 def delete_review(id):
 
+    #First, query the Reviews table to find the review,
+    # that matches the given id in the URI
     bad_review = Reviews.query.filter_by(review_id=id).first()
     
     #Return an error if review doesn't exist
@@ -104,30 +99,42 @@ def delete_review(id):
     #Otherwise delete review
     else:
 
+        #Check user is valid
         user_validator(bad_review)
 
+        #Once validated, delete review and commit
         db.session.delete(bad_review)
         db.session.commit()
-        return jsonify(review_schema.dump(bad_review))
+
+        #Finally return bad review to indicate successful deletion
+        return jsonify({"review_id": str(id), "user": bad_review.user,
+                        "destination": bad_review.destination})
 
 #\***************************************************************************\
 
+#This route is used for updating an existing review
 @review_bp.route("/<int:id>/", methods=["PUT", "PATCH"])
 @jwt_required()
 def update_review(id):
 
-    review_fields = ReviewSchema().load(request.json)
+    #First, obtain json data to be used for review update
+    review_fields = review_schema.load(request.json)
+
+    #Also query Reviews table to find the review,
+    # that matches the given id in the URI
     old_review = Reviews.query.filter_by(review_id=id).first()
     
     #Return an error if review doesn't exist
     if not old_review:
         return abort(400, description= "Review does not exist")
     
-    #Otherwise delete review
+    #Otherwise proceed to update review
     else:
 
+        #Check user is valid
         user_validator(old_review)
 
+        #Now replace the old values with the new ones 
         old_review.weather = review_fields["weather"], 
         old_review.safety = review_fields["safety"], 
         old_review.price = review_fields["price"], 
@@ -135,6 +142,8 @@ def update_review(id):
         old_review.friendliness = review_fields["friendliness"],
         old_review.writing = review_fields["writing"]
 
+        #Commit the changes, and return the newly edited review data,
+        # to show success
         db.session.commit()
         return jsonify(review_schema.dump(old_review))
     
@@ -142,10 +151,25 @@ def update_review(id):
 #SPECIAL OPERATIONS
 #\***************************************************************************\
 
+#Get all destinations, so users can check id for each destination
+@review_bp.route("/destinations/", methods=["GET"])
+def get_dests():
+    
+    #This query gets everything from the Destinations table
+    dests_list = Destinations.query.all()
+
+    #Then, the result is made into a dict then returned as json
+    result = destinations_schema.dump(dests_list)
+    return jsonify(result)
+
+#\***************************************************************************\
+
 #Get all reviews from particular user, anybody can access so no jwt here
 @review_bp.route("/for_user/<int:id>/", methods=["GET"])
 def get_reviews_for_user(id):
 
+    #This statement queries the Reviews table,
+    # where the user id for a row matches the id in the URI
     stmt = select(Reviews).where(Reviews.user==id)
     reviews_list_for_user = db.session.scalars(stmt).all()
 
@@ -154,21 +178,33 @@ def get_reviews_for_user(id):
 
 #\***************************************************************************\
 
-#Get average scores for a particular destination, no jwt again
-
+#MAIN APP FUNCTIONALITY
+#This route shows the average scores for each category for a destination
 @review_bp.route("/avg/<int:id>", methods=["GET"])
 def get_avg_scores(id):
 
-    
+    #This statement will select all score category columns in this query,
+    # such that the row's destination id matches the URI id
     stmt = select(Reviews.price, Reviews.friendliness, 
                   Reviews.safety, Reviews.transport, 
                   Reviews.weather).where(Reviews.destination==id)
     
+    #Run the statement
     reviews_avg_for_destination = db.session.execute(stmt)
+
+    #Get the result as python dictionary form
     result = reviews_schema.dump(reviews_avg_for_destination)
 
-    #Code to figure out averages for each, first make dict
-    avg_dict = {"friendliness": 0,
+    #Obtain name of the place based off of its id from Destinations,
+    # so query such that id from URI matches with entry in Destinations
+    dest_info = Destinations.query.filter_by(destination_id=id).first()
+
+    #Convert into dict
+    dest = destination_schema.dump(dest_info)
+
+    #Set up the dictionary which will contain the avg values
+    avg_dict = {"place": dest["name"],
+                "friendliness": 0,
                 "price": 0,
                 "safety": 0,
                 "transport": 0,
@@ -177,7 +213,8 @@ def get_avg_scores(id):
     #Then iterate through each score type to find average for each
     for score_type in avg_dict.keys():
 
-        count = 0
+        #Average is calculated as  (sum of all scores)/(num of scores)
+        count = 0 #Number of scores
         for scores in result:
             if score_type in scores.keys():
                 count += 1
@@ -186,8 +223,11 @@ def get_avg_scores(id):
         #Check for if count 0, if so, don't calculate avg,
         # otherwise will get DivideByZeroError
         if count != 0:
+
+            #Calculate average for given score type
             avg_dict[score_type] /= count
 
+    #Return the json object containing the average scores
     return jsonify(avg_dict)
 
 

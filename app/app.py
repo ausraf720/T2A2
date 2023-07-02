@@ -8,39 +8,38 @@ from dotenv import load_dotenv
 import os
 
 #\***************************************************************************\
-    
-#App main function
 
+#App main function that notifies Flask where all functionalities are located
+def create_app():
 
-app = Flask(__name__)
+    #Initialise app
+    app = Flask(__name__)
 
-#Load secrets from .env file
-load_dotenv()
-PASSWORD = os.environ.get('PASSWORD')
-USERNAME = os.environ.get('USERNAME')
-PORT_NUM = os.environ.get('PORT_NUM')
-DATABASE = os.environ.get('DATABASE')
+    #Load secrets from .env file, 
+    # inlcuding URI to connect to database which contains password,
+    # and JWT key used for encryption
+    load_dotenv()
+    URI = os.environ.get('URI')
+    SECRET_JWT_KEY = os.environ.get('SECRET_JWT_KEY')
 
-SECRET_JWT_KEY = os.environ.get('SECRET_JWT_KEY')
+    #Set database URI
+    app.config["SQLALCHEMY_DATABASE_URI"] = URI
 
-#Set database URI
-uri = f'postgresql+psycopg2:' + \
-    f'//{USERNAME}:{PASSWORD}@localhost:{PORT_NUM}/{DATABASE}'
-app.config["SQLALCHEMY_DATABASE_URI"] = uri
+    #Set JWT key
+    app.config["JWT_SECRET_KEY"] = SECRET_JWT_KEY
 
-#Set JWT key
-app.config["JWT_SECRET_KEY"] = SECRET_JWT_KEY
+    #Initialise all the modules 
+    db.init_app(app)
+    ma.init_app(app)
+    bcrypt.init_app(app)
+    jwt.init_app(app)
 
-db.init_app(app)
-ma.init_app(app)
-bcrypt.init_app(app)
-jwt.init_app(app)
+    #Register all routes and commands here
+    app.register_blueprint(db_commands)
+    app.register_blueprint(review_bp)
+    app.register_blueprint(auth_bp)
 
-#Register commands
-app.register_blueprint(db_commands)
-app.register_blueprint(review_bp)
-app.register_blueprint(auth_bp)
-
+    return app
   
 #\***************************************************************************\
 
