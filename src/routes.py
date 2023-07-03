@@ -85,35 +85,6 @@ def post_review():
 
 #\***************************************************************************\
 
-#This route deals with allowing a user to delete one of their reviews
-@review_bp.route("/<int:id>/", methods=["DELETE"])
-@jwt_required()
-def delete_review(id):
-
-    #First, query the Reviews table to find the review,
-    # that matches the given id in the URI
-    bad_review = Reviews.query.filter_by(review_id=id).first()
-    
-    #Return an error if review doesn't exist
-    if not bad_review:
-        return abort(404, description= "Review does not exist")
-    
-    #Otherwise delete review
-    else:
-
-        #Check user is valid
-        user_validator(bad_review)
-
-        #Once validated, delete review and commit
-        db.session.delete(bad_review)
-        db.session.commit()
-
-        #Finally return bad review to indicate successful deletion
-        return jsonify({"review_id": str(id), "user": bad_review.user,
-                        "destination": bad_review.destination}), 200
-
-#\***************************************************************************\
-
 #This route is used for updating an existing review
 @review_bp.route("/<int:id>/", methods=["PUT", "PATCH"])
 @jwt_required()
@@ -148,7 +119,35 @@ def update_review(id):
         # to show success
         db.session.commit()
         return jsonify(review_schema.dump(old_review)), 201
+
+#\***************************************************************************\
+
+#This route deals with allowing a user to delete one of their reviews
+@review_bp.route("/<int:id>/", methods=["DELETE"])
+@jwt_required()
+def delete_review(id):
+
+    #First, query the Reviews table to find the review,
+    # that matches the given id in the URI
+    bad_review = Reviews.query.filter_by(review_id=id).first()
     
+    #Return an error if review doesn't exist
+    if not bad_review:
+        return abort(404, description= "Review does not exist")
+    
+    #Otherwise delete review
+    else:
+
+        #Check user is valid
+        user_validator(bad_review)
+
+        #Once validated, delete review and commit
+        db.session.delete(bad_review)
+        db.session.commit()
+
+        #Finally return bad review to indicate successful deletion
+        return jsonify({"review_id": str(id), "user": bad_review.user,
+                        "destination": bad_review.destination}), 200 
 
 #SPECIAL OPERATIONS
 #\***************************************************************************\

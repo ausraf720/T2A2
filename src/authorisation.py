@@ -49,8 +49,12 @@ def auth_register():
         db.session.add(new_user)
         db.session.commit()
 
-        #Return data to indicate successful registration
-        return jsonify(user_schema.dump(new_user)), 201
+        #Return data to indicate successful registration in 'result'
+        result = user_schema.dump(new_user)
+
+        #However, get rid of password before displaying anything
+        del(result["password"])
+        return jsonify(result), 201
 
 #\***************************************************************************\
 
