@@ -32,6 +32,21 @@ def user_validator(review):
     if (not user_jwt) or (str(user_id) != str(review.user)):
         return abort(401, description="Invalid user")
 
+#\***************************************************************************\
+
+#Check for if destination exists
+def dest_checker(id):
+    #Query Destinations to check user actually exists and matches URI id
+    dest_info = Destinations.query.filter_by(destination_id=id).first()
+    #Convert into dict
+    dest = destination_schema.dump(dest_info)
+
+    #Return error if destination doesn't exist
+    if not dest:
+        return abort(404, description= "Destination does not exist")
+    else:
+        return dest
+
 #CRUD OPERATIONS BELOW
 #\***************************************************************************\
 
@@ -78,10 +93,16 @@ def post_review():
     #Check user is valid by calling this function
     user_validator(new_review)
 
+    
+    #Check destination is valid
+    dest_checker((review_schema.dump(new_review))["destination"])
+
+
     #Add and commit, then return the review data to confirm success
     db.session.add(new_review)
     db.session.commit()
-    return jsonify(review_schema.dump(new_review)), 201
+    result = review_schema.dump(new_review)
+    return jsonify(result), 201
 
 #\***************************************************************************\
 
@@ -194,54 +215,46 @@ def get_reviews_for_user(id):
 @review_bp.route("/avg/<int:id>", methods=["GET"])
 def get_avg_scores(id):
 
-    #Query Destinations to check user actually exists and matches URI id
-    dest_info = Destinations.query.filter_by(destination_id=id).first()
-    #Convert into dict
-    dest = destination_schema.dump(dest_info)
-
-    #Return error if destination doesn't exist
-    if not dest:
-        return abort(404, description= "Destination does not exist")
+    #First check destination exists
+    dest = dest_checker(id)
     
-    else:
-        #Query the Reviews table, 
-        # such that it selects all rows such that destination id matches URI id
-        reviews_list_for_dest = Reviews.query.filter_by(destination=id)
+    #Query the Reviews table, 
+    # such that it selects all rows such that destination id matches URI id
+    reviews_list_for_dest = Reviews.query.filter_by(destination=id)
 
-        #Get the result as python dictionary form
-        result = reviews_schema.dump(reviews_list_for_dest)
+    #Get the result as python dictionary form
+    result = reviews_schema.dump(reviews_list_for_dest)
 
-        #Set up the dictionary which will contain the avg values,
-        # note it only contains values for score types so far
-        avg_dict = {"friendliness": 0,
-                    "price": 0,
-                    "safety": 0,
-                    "transport": 0,
-                    "weather": 0}
+    #Set up the dictionary which will contain the avg values,
+    # note it only contains values for score types so far
+    avg_dict = {"friendliness": 0,
+                "price": 0,
+                "safety": 0,
+                "transport": 0,
+                "weather": 0}
 
-        #Then iterate through each score type to find average for each
-        for score_type in avg_dict.keys():
+    #Then iterate through each score type to find average for each
+    for score_type in avg_dict.keys():
 
-            #Average is calculated as  (sum of all scores)/(num of scores)
-            count = 0 #Number of scores
-            for scores in result:
-                if score_type in scores.keys():
-                    count += 1
-                    avg_dict[score_type] += scores[score_type]
-            
-            #Check for if count 0, if so, don't calculate avg,
-            # otherwise will get DivideByZeroError
-            if count != 0:
-
-                #Calculate average for given score type
-                avg_dict[score_type] /= count
+        #Average is calculated as  (sum of all scores)/(num of scores)
+        count = 0 #Number of scores
+        for scores in result:
+            if score_type in scores.keys():
+                count += 1
+                avg_dict[score_type] += scores[score_type]
         
+        #Check for if count 0, if so, don't calculate avg,
+        # otherwise will get DivideByZeroError
+        if count != 0:
 
-        #Add destination name from dest query at start of function
-        avg_dict["place name"] = dest["name"]
+            #Calculate average for given score type
+            avg_dict[score_type] /= count
+    
 
-        #Return the json object containing the average scores
-        return jsonify(avg_dict), 200
+    #Add destination name from dest query at start of function
+    avg_dict["place name"] = dest["name"]
 
+    #Return the json object containing the average scores
+    return jsonify(avg_dict), 200
 
 #\***************************************************************************\

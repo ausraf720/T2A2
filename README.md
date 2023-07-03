@@ -13,6 +13,8 @@ Provided is a sample .env file, but a personal postgresql uri and jwt secret key
 
 When setting up application, make sure to install the [Requirements](./src/requirements.txt). Below is a process of running the application using python venv in the terminal (this was done on MAC):
 
+Change directory to /src folder, then run commands in terminal below:
+
 `python3 -m venv .venv`
 
 `source .venv/bin/activate`
@@ -27,7 +29,7 @@ Populate the tables with:
 
 `flask db seed`
 
-Run server with:
+Run server with in /src folder:
 
 `flask run`
 
@@ -35,10 +37,21 @@ Optionally, tables can then be removed at end with:
 
 `flask db drop`
 
-Then run this in the terminal to exit the venv:
+Then run this in the terminal to exit the venv and delete the folder:
 
 `deactivate`
 
+`rm -rf ./.venv`
+
+### NOTE
+
+The computer this project was programmed on did not work well with 'psycopg2-binary'. Instead, for everything to work, 'psycopg2' was installed in the following way to make everything work:
+
+`pip uninstall psycopg2-binary -y`
+
+`pip install psycopg2`
+
+This seems to only be a problem on some MAC systems, but shouldn't be an issue to other systems and OSs. If flask is able to run from just installing requirements file, don't do this.
 
 ## R1
 
@@ -73,7 +86,7 @@ PostgreSQL has a number of advantages and disadvantages in comparison to other r
 
 ### Advantages:
 
-* PostgreSQL is free and open-source. This is perfect for junior web-developers who are building smaller applications, such as this one, and need a free and easily accessible database system where they can improve their skills and begin to demonstrate their abilities without any cost. 
+* PostgreSQL is free and open-source. This is perfect for junior web-developers who are building smaller applications, such as this one, and need a free and easily accessible database system where they can improve their skills and begin to demonstrate their abilities without any extra cost. 
 
 * PostgreSQL is also very old and thus well-established in terms of SQL-based database systems, and has lots of functionality, more-so than something such as the more popular MySQL. PostgreSQL supports and is compatible with all SQL features, unlike MySQL, so it’s advantageous for developers who need the full power of SQL.
 
@@ -85,7 +98,7 @@ PostgreSQL has a number of advantages and disadvantages in comparison to other r
 
 * PostgreSQL can’t do read operations as fast as MySQL, meaning any GET requests in the API may have actually been faster if MySQL were used. However, PostgreSQL makes up for this by having faster writing times. Nowadays, both systems are highly optimised and the speed differences are probably negligible for smaller applications.
 
-Overall, PostgreSQL’s compatibility with Python Flask and SQAlchemy, as well as it being free to use, are valid enough reasons for it to be used as the database systems as its drawbacks don’t really hinder its usefulness for smaller applications.
+Overall, PostgreSQL’s compatibility with Python Flask and SQAlchemy, as well as it being free to use, are valid enough reasons for it to be used as the database system as its drawbacks don’t really hinder its usefulness for smaller applications.
 
 ## R4
 
@@ -96,7 +109,7 @@ Resources used:
 
 ### Functionality of ORM:
 
-ORM (Object Relational Mapping) can be thought of building a bridge from a database system to an object-oriented program, such as one written in Python or Java.
+ORM (Object Relational Mapping) can be thought of as building a bridge from a database system to an object-oriented program, such as one written in Python or Java.
 
 Many programs require use of a database to store their data, and usually those databases come with a DBMS (database management system) in the language of SQL. SQL allows for direct operations on the database, but not only is this different to the language used for the program, it means the application needs to communicate with SQL, which then communicates with the database, complicating development. ORM tools however are usually some sort of library or package that exists for a programming language, like SQLAlchemy for Python, and these tools allow database operations to be coded directly into the application’s files in the programming language of that application. 
 
@@ -104,12 +117,12 @@ The ORM functions by building a map that can translate objects from the object-o
 
 ### Benefits of ORM:
 
-ORM tools simplify the development process, as developers can code all of the app’s necessary database operations right into their app files, rather than needing a separate file for SQL commands that they need to link to. This means less code needs to be written, meaning development costs and times are reduced greatly. ORM's also come with other advantages. Development time is again reduced due to the fact that the ORM  handles changes to the database/API the application is accessing, meaning that when a change happens, the developer doesn't need to make changes to the code to adapt to the change. 
+ORM tools simplify the development process, as developers can code all of the app’s necessary database operations right into their app files, rather than needing a separate file for SQL commands that they need to link to. This means less code needs to be written, meaning development costs and times are reduced greatly. ORMs also come with other advantages. Development time is again reduced due to the fact that the ORM  handles changes to the database/API the application is accessing, meaning that when a change happens, the developer doesn't need to make changes to the code to adapt to the change. 
 
-Another major advantage is that they improve security by preventing any SQL injection attacks. If pure SQL is used, hackers can potentially exploit this by using 'SQL injections' to input in SQL commands into the database to obtain sensitive data. ORMs however use sanitisation to prevent this, without the developer to coding in the sanitisation methods themselves which would take more time and be riskier. Overall, using an ORM is then more secure than using just loading in SQL code.
+Another major advantage is that they improve security by preventing any SQL injection attacks. If pure SQL is used, hackers can potentially exploit this by using 'SQL injections' to input in SQL commands into the database to obtain sensitive data. ORMs however use sanitisation to prevent this, without the developer to coding in the sanitisation methods themselves which would take more time and be riskier. Overall, using an ORM is then more secure than using just using pure SQL commands.
  
 
-However, ORM's aren't without drawbacks. Firstly ORM's may not have the full power of SQL and not be able to handle complex SQL queries. Using an ORM will also potentially be slower than pure SQL. Lastly, even though the developer might not need to learn SQL fully to code database operations, which is a potential advantage in itself, they need to learn the ORM which is still time-consuming in itself. However, although these drawbacks can complicate things when complex SQL is involved, for most cases, ORMs are greatly useful and versatile for simple applications and APIs.
+However, ORM's aren't without drawbacks. Firstly ORM's may not have the full power of SQL and not be able to handle complex SQL queries. Using an ORM will also potentially be slower than pure SQL. Lastly, even though the developer might not need to learn SQL fully to code database operations, which is a potential advantage in itself, they need to learn the ORM which is still time-consuming in itself. However, although these drawbacks can complicate things when complex SQL is involved, for most cases, ORMs are greatly useful and versatile for many applications and APIs.
 
 ## R5
 
@@ -119,6 +132,11 @@ However, ORM's aren't without drawbacks. Firstly ORM's may not have the full pow
     * method = POST	
     * restricted access: FALSE
 
+    * Required input fields:
+        * "password" (str)
+        * "username" (str)
+        * "email" (str)
+
 This endpoint can be accessed by anyone, and is used to add themselves as a new user to the system so that they can write their own reviews. However, they cannot use an existing username or email, those details must be unique.
 
 Here is what expected input and output should look like:
@@ -127,6 +145,9 @@ Here is what expected input and output should look like:
 2. * /auth/login/ 		
     * method = POST	
     * restricted access: FALSE
+    * Required input fields:
+        * "password" (str)
+        * "username" (str)
 
 This endpoint gives a token to any existing user who gives an existing username and the correct associated password. This token then allows that user to perform CRUD operations for up to 1 day (as seen below) before needing to login again. It also gives the user's ID in case they forget it.
 
@@ -138,6 +159,7 @@ Here is what expected input and output should look like:
 3. * /reviews/		
     * method = GET		
     * restricted access: FALSE
+    * Required input fields: NONE
 
 This endpoint shows a list of every single review, by every user, for every destination, and can be seen by anyone.
 
@@ -147,6 +169,15 @@ Here is what expected output should look like:
 4. * /reviews/		
     * method = POST	
     * restricted access: needs JWT token
+    * Required input fields:
+        * "destination" (int - *id of destination*)
+        * "user" (int - *id of user*)
+        * "friendliness" (int, 1 <= input <= 5)
+        * "price" (int, 1 <= input <= 5)
+        * "safety" (int, 1 <= input <= 5)
+        * "transport" (int, 1 <= input <= 5)
+        * "weather" (int, 1 <= input <= 5)
+        * "writing" (str)
 
 This endpoint allows a particular user to post a review for themselves. They must provide a JWT token, and they cannot post reviews for other users, just themselves.
 
@@ -156,9 +187,22 @@ Here is what expected input should look like:
 Here is what expected output should look like:
 ![Postman 5](./docs/postman_screenshots/Postman%205.png)
 
+### NOTE:
+
+Because this route (and others below) require authentication, make sure to include the JWT token generated by login from before:
+![Postman 12](./docs/postman_screenshots/Postman%2012.png)
+
+
 5. * /reviews/\<int:id>	
     * method = PUT or PATCH	
     * restricted access: needs JWT token
+    * Required input fields:
+        * "friendliness" (int, 1 <= input <= 5)
+        * "price" (int, 1 <= input <= 5)
+        * "safety" (int, 1 <= input <= 5)
+        * "transport" (int, 1 <= input <= 5)
+        * "weather" (int, 1 <= input <= 5)
+        * "writing" (str)
 
 This endpoint allows for updating an existing review given its ‘id’. As before, a JWT token is required, and the user can only update their own reviews, no one else’s.
 
@@ -171,8 +215,9 @@ Here is what expected output should look like:
 6. * /reviews/\<int:id>	
     * method = DELETE	
     * restricted access: needs JWT token
+    * Required input fields: NONE
 
-This endpoint allows a particular user to delete one of their reviews of the given ‘id’. Once again they must provide a jwt token to perform the operation, and they also cannot delete a review that wasn’t made by them.
+This endpoint allows a particular user to delete one of their reviews of the given ‘id’. Once again they must provide a JWT token to perform the operation, and they also cannot delete a review that wasn’t made by them.
 
 Here is what expected output should look like:
 ![Postman 8](./docs/postman_screenshots/Postman%208.png)
@@ -181,7 +226,7 @@ Here is what expected output should look like:
     * method = GET		
     * restricted access: FALSE
 
-This shows all the destinations, so that users can find their IDs when trying to make a review for a new destination.
+This shows all the destinations, so that users can find the associated destination IDs when trying to make a review for a new destination.
 
 Here is what expected output should look like:
 ![Postman 9](./docs/postman_screenshots/Postman%209.png)
@@ -189,6 +234,7 @@ Here is what expected output should look like:
 8. * /reviews/for_user/\<int:id>	
     * method = GET		
     * restricted access: FALSE
+    * Required input fields: NONE
 
 This shows all the reviews for a particular user. 
 
@@ -198,6 +244,7 @@ Here is what expected output should look like:
 9. * /reviews/avg/\<int:id>	
     * method = GET		
     * restricted_access = FALSE
+    * Required input fields: NONE
 
 The most important endpoint of the app. This route provides all the average scores for each category for a given destination (which is determined by the ‘id’). Anyone can see this information.
 
@@ -243,18 +290,20 @@ The project has three models:
 
 The Users model stores information on each user, their name, password, and email. The Destinations data table stores information on each travel destination, such as the name of that destination (Melbourne as an example), the country it’s in (Australia), and its latitude and longitude. 
 
-The two tables above are then fundamental for the final class, the Reviews class. Here, each review instance keeps track of both the ID of the User that wrote it, and ID of the travel Destination that review is about. Thus, the Reviews class has a one-to-many relationship with both the Users and Destinations table. 
+The two tables above are then fundamental for the final class, the Reviews class. Here, each review object keeps track of both the ID of the User that wrote it, and ID of the travel Destination that review is about. Thus, the Reviews class has a one-to-many relationship with both the Users and Destinations table. The review object has information on all the scoring categories as well, including friendliness, price, safety, transport, and weather, as well as the date of the review, and a written section for a more detailed response.
 
-In order to set up these relationships in the Flask application, SQLAlchemy can be used to set up the attributes ‘user’ and ‘destination’ to have foreign keys to their respective tables. Additionally, for the information about users to be displayed (such as their name) in any get request for reviews, and for destination information to also be displayed (such as the name and country of that destination), additional relationships need to be added in for the schemas. This is handled by the ‘relationship’ method in SQAlchemy.
+In order to set up these relationships in the Flask application, SQLAlchemy can be used to set up the attributes ‘user’ and ‘destination’ to have foreign keys to their respective tables. Additionally, for nested information about users to be displayed (such as their name) in any get request for reviews, and for destination information to also be displayed (such as the name and country of that destination) in a nested format, additional relationships need to be added in for the schemas. This is handled by the ‘relationship’ method in SQAlchemy.
 
 ## R9
 
-In terms of the database level, the database will contain the aforementioned three models as their own tables: 
+In terms of the database level, the database contains the aforementioned three models as their own tables: 
 * Users table
 * Destinations table 
 * Reviews table
 
 Firstly, each of these tables has their own numerical ID, which plays the role of being the primary key for each table. Then, they’re linked together in the database through the use of foreign keys, the same relationships as mentioned above. The Reviews table has two foreign keys. The first foreign key ‘user’ links to the Users table ‘user_id’ primary key. The second key ‘destination’ also is a foreign key that links to the ‘destination_id’ primary key in the Destinations table. This matches up with the relationships established in the Flask app itself.
+
+PostgreSQL recognises that the Users table is referenced by a foriegn key from the Reviews table. Likewise it also recognises the Destinations table is referenced by another foreign key from the Reviews table.
 
 ## R10
 
@@ -263,13 +312,13 @@ First of all, Trello was used to assist in managing tasks in an orderly and time
 ![User stories](./docs/user_stories.png)
 
 
-The project is then be completed through a number of steps:
+The project is then completed through a number of steps:
 
 1. Set up the database and the initial app file: This is where PostgreSQL is introduced, for looking at the database directly, as well as Flask to serve as the main framework for the application. SQLAlchemy then serves as the ORM toolkit between the application and database layer. 
 
 2. Modularise the application, by making separate files for: initialisation, models, routes, commands, and main application file to run Flask. No new tools are introduced.
 
-3. Next, routes and endpoints need to be established to form full CRUD functionality. The Marshmallow package is introduced to handle schemas and output/input of json data. Additionally, Postman is then used for testing the routes. Here is where User 1’s request can be met, as it allows for reviews to be posted/edited/deleted.
+3. Next, routes and endpoints need to be established to form full CRUD functionality for reviews. The Marshmallow package is introduced to handle schemas and output/input of json data. Additionally, Postman is then used for testing the routes. Here is where User 1’s request can be met, as it allows for reviews to be retrieved/posted/edited/deleted.
 
 4. Introduce the special route of returning average scores for a given destination. This requires some Python functionality and slightly more advanced querying, but this meets User 2’s request.
 
