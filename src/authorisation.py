@@ -50,7 +50,7 @@ def auth_register():
         db.session.commit()
 
         #Return data to indicate successful registration
-        return jsonify(user_schema.dump(new_user))
+        return jsonify(user_schema.dump(new_user)), 201
 
 #\***************************************************************************\
 
@@ -82,6 +82,6 @@ def auth_login():
 
         #Return the user info and their new access token
         return jsonify({"User":user.username, "ID": user.user_id,
-                        "Token": access_token })
+                        "Token": access_token }), 200
 
 #\***************************************************************************\

@@ -2,13 +2,17 @@ from flask import Blueprint, jsonify, request, abort
 from sqlalchemy import select
 from init import db
 from models import Reviews, Users, Destinations, \
-                    review_schema, reviews_schema, \
+                    review_schema, reviews_schema, user_schema, \
                     destination_schema, destinations_schema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import date
 from error_handling import error_handler
 
+
 review_bp = Blueprint('reviews', __name__, url_prefix="/reviews")
+
+#Activate error handler function for this file
+error_handler(review_bp)
 
 #\***************************************************************************\
 
@@ -28,8 +32,6 @@ def user_validator(review):
     if (not user_jwt) or (str(user_id) != str(review.user)):
         return abort(401, description="Invalid user")
 
-error_handler(review_bp)
-
 #CRUD OPERATIONS BELOW
 #\***************************************************************************\
 
@@ -42,7 +44,7 @@ def get_reviews():
 
     #Then, the result is made into a dict then returned as json
     result = reviews_schema.dump(reviews_list)
-    return jsonify(result)
+    return jsonify(result), 200
 
 #\***************************************************************************\
 
@@ -79,7 +81,7 @@ def post_review():
     #Add and commit, then return the review data to confirm success
     db.session.add(new_review)
     db.session.commit()
-    return jsonify(review_schema.dump(new_review))
+    return jsonify(review_schema.dump(new_review)), 201
 
 #\***************************************************************************\
 
@@ -94,7 +96,7 @@ def delete_review(id):
     
     #Return an error if review doesn't exist
     if not bad_review:
-        return abort(400, description= "Review does not exist")
+        return abort(404, description= "Review does not exist")
     
     #Otherwise delete review
     else:
@@ -108,7 +110,7 @@ def delete_review(id):
 
         #Finally return bad review to indicate successful deletion
         return jsonify({"review_id": str(id), "user": bad_review.user,
-                        "destination": bad_review.destination})
+                        "destination": bad_review.destination}), 200
 
 #\***************************************************************************\
 
@@ -126,7 +128,7 @@ def update_review(id):
     
     #Return an error if review doesn't exist
     if not old_review:
-        return abort(400, description= "Review does not exist")
+        return abort(404, description= "Review does not exist")
     
     #Otherwise proceed to update review
     else:
@@ -145,7 +147,7 @@ def update_review(id):
         #Commit the changes, and return the newly edited review data,
         # to show success
         db.session.commit()
-        return jsonify(review_schema.dump(old_review))
+        return jsonify(review_schema.dump(old_review)), 201
     
 
 #SPECIAL OPERATIONS
@@ -160,21 +162,31 @@ def get_dests():
 
     #Then, the result is made into a dict then returned as json
     result = destinations_schema.dump(dests_list)
-    return jsonify(result)
+    return jsonify(result), 200
 
 #\***************************************************************************\
 
 #Get all reviews from particular user, anybody can access so no jwt here
 @review_bp.route("/for_user/<int:id>/", methods=["GET"])
 def get_reviews_for_user(id):
+    
+    #Query Users to check user actually exists and matches URI id
+    user = user_schema.dump(Users.query.filter_by(user_id=id).first())
+    if not user:
 
-    #This statement queries the Reviews table,
-    # where the user id for a row matches the id in the URI
-    stmt = select(Reviews).where(Reviews.user==id)
-    reviews_list_for_user = db.session.scalars(stmt).all()
+        #Return error if user doesn't exist
+        return abort(404, description= "User not found")
+    else:
+        #This statement queries the Reviews table,
+        # where the user id for a row matches the id in the URI
+        reviews_list_for_user = Reviews.query.filter_by(user=id)
+        result = reviews_schema.dump(reviews_list_for_user)
 
-    result = reviews_schema.dump(reviews_list_for_user)
-    return jsonify(result)
+        #Return another error if user exists but has no reviews
+        if not result:
+            return abort(404, description= "No reviews found for user")
+        else:
+            return jsonify(result), 200
 
 #\***************************************************************************\
 
@@ -183,52 +195,54 @@ def get_reviews_for_user(id):
 @review_bp.route("/avg/<int:id>", methods=["GET"])
 def get_avg_scores(id):
 
-    #This statement will select all score category columns in this query,
-    # such that the row's destination id matches the URI id
-    stmt = select(Reviews.price, Reviews.friendliness, 
-                  Reviews.safety, Reviews.transport, 
-                  Reviews.weather).where(Reviews.destination==id)
-    
-    #Run the statement
-    reviews_avg_for_destination = db.session.execute(stmt)
-
-    #Get the result as python dictionary form
-    result = reviews_schema.dump(reviews_avg_for_destination)
-
-    #Obtain name of the place based off of its id from Destinations,
-    # so query such that id from URI matches with entry in Destinations
+    #Query Destinations to check user actually exists and matches URI id
     dest_info = Destinations.query.filter_by(destination_id=id).first()
-
     #Convert into dict
     dest = destination_schema.dump(dest_info)
 
-    #Set up the dictionary which will contain the avg values
-    avg_dict = {"place": dest["name"],
-                "friendliness": 0,
-                "price": 0,
-                "safety": 0,
-                "transport": 0,
-                "weather": 0}
+    #Return error if destination doesn't exist
+    if not dest:
+        return abort(404, description= "Destination does not exist")
+    
+    else:
+        #Query the Reviews table, 
+        # such that it selects all rows such that destination id matches URI id
+        reviews_list_for_dest = Reviews.query.filter_by(destination=id)
 
-    #Then iterate through each score type to find average for each
-    for score_type in avg_dict.keys():
+        #Get the result as python dictionary form
+        result = reviews_schema.dump(reviews_list_for_dest)
 
-        #Average is calculated as  (sum of all scores)/(num of scores)
-        count = 0 #Number of scores
-        for scores in result:
-            if score_type in scores.keys():
-                count += 1
-                avg_dict[score_type] += scores[score_type]
+        #Set up the dictionary which will contain the avg values,
+        # note it only contains values for score types so far
+        avg_dict = {"friendliness": 0,
+                    "price": 0,
+                    "safety": 0,
+                    "transport": 0,
+                    "weather": 0}
+
+        #Then iterate through each score type to find average for each
+        for score_type in avg_dict.keys():
+
+            #Average is calculated as  (sum of all scores)/(num of scores)
+            count = 0 #Number of scores
+            for scores in result:
+                if score_type in scores.keys():
+                    count += 1
+                    avg_dict[score_type] += scores[score_type]
+            
+            #Check for if count 0, if so, don't calculate avg,
+            # otherwise will get DivideByZeroError
+            if count != 0:
+
+                #Calculate average for given score type
+                avg_dict[score_type] /= count
         
-        #Check for if count 0, if so, don't calculate avg,
-        # otherwise will get DivideByZeroError
-        if count != 0:
 
-            #Calculate average for given score type
-            avg_dict[score_type] /= count
+        #Add destination name from dest query at start of function
+        avg_dict["place name"] = dest["name"]
 
-    #Return the json object containing the average scores
-    return jsonify(avg_dict)
+        #Return the json object containing the average scores
+        return jsonify(avg_dict), 200
 
 
 #\***************************************************************************\
